@@ -84,13 +84,27 @@ def query_vector_store(query_text, top_k=5):
             # 尝试从持久化目录加载现有索引
             storage_context = StorageContext.from_defaults(persist_dir=VECTOR_STORE_PATH)
             index = VectorStoreIndex.from_documents([], storage_context=storage_context)
-        except:
+            
+            # 检查索引中是否有文档
+            if len(index.docstore.docs) == 0:
+                return "错误：向量索引为空，请先上传PDF文件"
+                
+        except Exception as e:
+            print(f"Error loading index: {e}")
             # 如果加载失败，返回错误信息
-            return "错误：向量索引尚未初始化，请先上传PDF文件"
+            return "错误：无法加载向量索引，请先上传PDF文件"
     
-    # 将索引转换为查询引擎，设置返回结果的数量
-    query_engine = index.as_query_engine(similarity_top_k=top_k)
-    # 执行查询
-    response = query_engine.query(query_text)
-    # 返回查询结果的字符串表示
-    return str(response)
+    # 检查索引中是否有文档
+    if len(index.docstore.docs) == 0:
+        return "错误：向量索引为空，请先上传PDF文件"
+    
+    try:
+        # 将索引转换为查询引擎，设置返回结果的数量
+        query_engine = index.as_query_engine(similarity_top_k=top_k)
+        # 执行查询
+        response = query_engine.query(query_text)
+        # 返回查询结果的字符串表示
+        return str(response)
+    except Exception as e:
+        print(f"Query error: {e}")
+        return f"查询失败：{str(e)}"

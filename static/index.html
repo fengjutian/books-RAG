@@ -268,10 +268,13 @@
                     const result = await response.json();
                     showStatus(`✅ PDF上传成功！已处理 ${result.chunks} 个文本块`, 'success');
                 } else {
-                    throw new Error('上传失败');
+                    // 尝试获取服务器返回的错误详情
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.detail || `上传失败 (${response.status})`;
+                    throw new Error(errorMessage);
                 }
             } catch (error) {
-                showStatus('❌ 上传失败，请重试', 'error');
+                showStatus(`❌ ${error.message}`, 'error');
                 console.error('Upload error:', error);
             }
         }
