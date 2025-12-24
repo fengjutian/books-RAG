@@ -1,7 +1,7 @@
 import os
 from app.config import CHUNK_SIZE, CHUNK_OVERLAP, BASE_DIR
 from app.models.document import PDFDocument
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from PyPDF2 import PdfReader
 
 PDF_STORAGE = os.path.join(BASE_DIR, "data", "pdfs")
