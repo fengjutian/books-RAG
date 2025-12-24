@@ -8,7 +8,7 @@ from langchain.chat_models import ChatOpenAI
 os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
 
 # 初始化 LLM
-llm_predictor = ChatGPTLLMPredictor(ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0))
+llm_predictor = ChatGPTLLMPredictor(ChatOpenAI(model_name="kimi-k2-turbo-preview", temperature=0))
 service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
 
 # 初始化向量数据库

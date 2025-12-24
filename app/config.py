@@ -1,7 +1,7 @@
 import os
 
 # LLM 配置
-LLM_MODEL = "gpt-3.5-turbo"
+LLM_MODEL = "kimi-k2-turbo-preview"
 TEMPERATURE = 0
 
 # 向量数据库路径
