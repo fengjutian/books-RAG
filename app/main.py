@@ -1,6 +1,17 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+import os
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+# 检查Kimi API密钥配置
+MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY")
+if not MOONSHOT_API_KEY or MOONSHOT_API_KEY == "your_moonshot_api_key_here":
+    raise ValueError("请配置有效的Kimi API密钥。请编辑.env文件并设置MOONSHOT_API_KEY")
+
 from app.routes import upload, query
 
 app = FastAPI(title="PDF RAG FastAPI")
