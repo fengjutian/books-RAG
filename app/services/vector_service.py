@@ -1,25 +1,30 @@
 import os
-from llama_index import GPTVectorStoreIndex, ServiceContext
-from llama_index.vector_stores import FAISSVectorStore
+from llama_index.core import VectorStoreIndex, ServiceContext, StorageContext
+from llama_index.vector_stores.faiss import FaissVectorStore
+from llama_index.llms.openai import OpenAI
 from app.config import VECTOR_STORE_PATH
-from llama_index.langchain_helpers.chatgpt import ChatGPTLLMPredictor
-from langchain.chat_models import ChatOpenAI
 
 os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
 
-# 初始化 LLM
-llm_predictor = ChatGPTLLMPredictor(ChatOpenAI(model_name="kimi-k2-turbo-preview", temperature=0))
-service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
+# 初始化 LLM 和服务上下文
+llm = OpenAI(model="kimi-k2-turbo-preview", temperature=0)
+service_context = ServiceContext.from_defaults(llm=llm)
 
 # 初始化向量数据库
-vector_store = FAISSVectorStore.from_documents([], service_context=service_context, persist_path=VECTOR_STORE_PATH)
+vector_store = FaissVectorStore()
+storage_context = StorageContext.from_defaults(vector_store=vector_store)
+index = VectorStoreIndex.from_documents([], service_context=service_context, storage_context=storage_context)
+index.storage_context.persist(persist_dir=VECTOR_STORE_PATH)
 
 def add_documents_to_index(docs):
-    global vector_store
-    vector_store.add_documents(docs)
-    vector_store.persist()
+    global index
+    # 向现有索引添加文档
+    for doc in docs:
+        index.insert(doc)
+    index.storage_context.persist(persist_dir=VECTOR_STORE_PATH)
 
 def query_vector_store(query_text, top_k=5):
-    global vector_store
-    response = vector_store.query(query_text, similarity_top_k=top_k, service_context=service_context)
-    return response.response
+    global index
+    query_engine = index.as_query_engine(similarity_top_k=top_k)
+    response = query_engine.query(query_text)
+    return str(response)

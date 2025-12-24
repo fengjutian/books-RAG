@@ -1,7 +1,7 @@
 import os
 from app.config import CHUNK_SIZE, CHUNK_OVERLAP, BASE_DIR
 from app.models.document import PDFDocument
-from llama_index.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from PyPDF2 import PdfReader
 import shutil
 
