@@ -1,7 +1,7 @@
 import os
 from app.config import CHUNK_SIZE, CHUNK_OVERLAP, BASE_DIR
 from app.models.document import PDFDocument
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from llama_index.core.node_parser import SentenceSplitter
 from PyPDF2 import PdfReader
 
 PDF_STORAGE = os.path.join(BASE_DIR, "data", "pdfs")
@@ -15,7 +15,7 @@ def read_pdf(file_path: str) -> str:
     return text
 
 def split_text_to_chunks(text: str):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+    splitter = SentenceSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     chunks = splitter.split_text(text)
     return chunks
 

@@ -7,12 +7,10 @@
 """
 
 import os
-import faiss
 from llama_index.core import VectorStoreIndex, StorageContext
-from llama_index.vector_stores.faiss import FaissVectorStore
 from llama_index.llms.openai import OpenAI
 from llama_index.core.settings import Settings
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
 
 # ------------------------------ 配置部分 ------------------------------
 # 向量存储持久化路径
@@ -26,28 +24,13 @@ os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
 Settings.llm = OpenAI(model="kimi-k2-turbo-preview", temperature=0)
 
 # 设置全局嵌入模型
-# 使用本地的sentence-transformers/all-MiniLM-L6-v2模型，避免依赖OpenAI API密钥
-# 该模型生成384维的向量表示
-Settings.embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+# 使用OpenAI嵌入模型
+Settings.embed_model = OpenAIEmbedding()
 
 # ------------------------------ 向量存储初始化 ------------------------------
-# 创建FAISS索引对象
-# 使用IndexFlatL2索引类型，L2距离度量
-# 维度设为384，与sentence-transformers/all-MiniLM-L6-v2模型的输出维度匹配
-faiss_index = faiss.IndexFlatL2(384)
-
-# 创建FAISS向量存储实例
-vector_store = FaissVectorStore(faiss_index=faiss_index)
-
-# 创建存储上下文，将向量存储关联到上下文中
-storage_context = StorageContext.from_defaults(vector_store=vector_store)
-
-# 创建向量索引对象
-# 初始化为空索引，后续可通过add_documents_to_index方法添加文档
-index = VectorStoreIndex.from_documents([], storage_context=storage_context)
-
-# 持久化索引到本地文件系统
-index.storage_context.persist(persist_dir=VECTOR_STORE_PATH)
+# 延迟初始化索引对象
+index = None
+storage_context = None
 
 # ------------------------------ 功能函数 ------------------------------
 
@@ -61,10 +44,23 @@ def add_documents_to_index(docs):
     返回值:
         None
     """
-    global index
+    global index, storage_context
+    
+    # 如果索引不存在，先初始化
+    if index is None:
+        try:
+            # 尝试从持久化目录加载现有索引
+            storage_context = StorageContext.from_defaults(persist_dir=VECTOR_STORE_PATH)
+            index = VectorStoreIndex.from_documents([], storage_context=storage_context)
+        except:
+            # 如果加载失败，创建新的索引
+            storage_context = StorageContext.from_defaults()
+            index = VectorStoreIndex([], storage_context=storage_context)
+    
     # 遍历文档列表，逐个插入到索引中
     for doc in docs:
         index.insert(doc)
+    
     # 将更新后的索引持久化到本地
     index.storage_context.persist(persist_dir=VECTOR_STORE_PATH)
 
@@ -80,7 +76,18 @@ def query_vector_store(query_text, top_k=5):
     返回值:
         str: 查询结果的文本表示
     """
-    global index
+    global index, storage_context
+    
+    # 如果索引不存在，先尝试加载
+    if index is None:
+        try:
+            # 尝试从持久化目录加载现有索引
+            storage_context = StorageContext.from_defaults(persist_dir=VECTOR_STORE_PATH)
+            index = VectorStoreIndex.from_documents([], storage_context=storage_context)
+        except:
+            # 如果加载失败，返回错误信息
+            return "错误：向量索引尚未初始化，请先上传PDF文件"
+    
     # 将索引转换为查询引擎，设置返回结果的数量
     query_engine = index.as_query_engine(similarity_top_k=top_k)
     # 执行查询
