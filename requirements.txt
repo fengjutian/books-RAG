@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+llama-index
+faiss-cpu
+openai
+python-multipart
+pypdf2
