@@ -13,7 +13,7 @@ from typing import Any, Mapping, List
 from openai import OpenAI
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core.settings import Settings
-from llama_index.core.llms import CustomLLM, CompletionResponse
+from llama_index.core.llms import CustomLLM, CompletionResponse, LLMMetadata
 from llama_index.core.llms.callbacks import llm_completion_callback
 from llama_index.core.embeddings import MockEmbedding
 
@@ -50,12 +50,12 @@ class DeepSeekLLM(CustomLLM):
         self._client = OpenAI(api_key=api_key, base_url=base_url)
 
     @property
-    def metadata(self) -> Mapping[str, Any]:
-        return {
-            "model": self._model,
-            "context_window": 32768,
-            "num_output": 4096,
-        }
+    def metadata(self) -> LLMMetadata:
+        return LLMMetadata(
+            model_name=self._model,
+            context_window=32768,
+            num_output=4096,
+        )
 
     @llm_completion_callback()
     def complete(self, prompt: str, **kwargs: Any) -> str:
