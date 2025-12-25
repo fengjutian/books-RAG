@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF RAG 系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -140,8 +141,97 @@
         }
         
         .result-content {
-            color: #666;
-            line-height: 1.6;
+            color: #333;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        
+        /* Markdown 样式 */
+        .result-content h1, .result-content h2, .result-content h3, .result-content h4 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .result-content h1 {
+            font-size: 1.6em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .result-content h2 {
+            font-size: 1.4em;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+        }
+        
+        .result-content h3 {
+            font-size: 1.2em;
+        }
+        
+        .result-content p {
+            margin-bottom: 12px;
+        }
+        
+        .result-content ul, .result-content ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        
+        .result-content li {
+            margin-bottom: 5px;
+        }
+        
+        .result-content blockquote {
+            border-left: 4px solid #667eea;
+            background: #f8f9ff;
+            margin: 15px 0;
+            padding: 10px 15px;
+            color: #555;
+            font-style: italic;
+        }
+        
+        .result-content code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .result-content pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .result-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        
+        .result-content th, .result-content td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .result-content th {
+            background: #f8f9ff;
+            font-weight: 600;
+        }
+        
+        .result-content strong {
+            color: #2c3e50;
+            font-weight: 600;
         }
         
         .loading {
@@ -163,6 +253,26 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
         
         /* 响应式设计 */
@@ -189,26 +299,6 @@
                 font-size: 2em;
             }
         }
-        
-        .status {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            display: none;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
     </style>
 </head>
 <body>
@@ -230,18 +320,21 @@
                 </div>
                 
                 <div class="status" id="uploadStatus"></div>
+
+                <h3>💬 智能问答</h3>
+                <textarea class="query-input" id="queryInput" placeholder="请输入您的问题..." rows="4"></textarea>
+                <button class="query-btn" onclick="askQuestion()">提问</button>
+                    
+                <div class="loading" id="queryLoading">
+                    <div class="spinner"></div>
+                    <p>AI正在思考中...</p>
+                </div>
             </div>
             
             <div class="right-panel">
                 <div class="query-section">
-                    <h3>💬 智能问答</h3>
-                    <textarea class="query-input" id="queryInput" placeholder="请输入您的问题..." rows="4"></textarea>
-                    <button class="query-btn" onclick="askQuestion()">提问</button>
                     
-                    <div class="loading" id="queryLoading">
-                        <div class="spinner"></div>
-                        <p>AI正在思考中...</p>
-                    </div>
+                    
                     
                     <div class="result-section" id="resultSection">
                         <h3>🤖 AI回答</h3>
@@ -350,7 +443,9 @@
                 
                 if (response.ok) {
                     const result = await response.json();
-                    resultContent.textContent = result.answer;
+                    // 将Markdown转换为HTML
+                    const htmlContent = marked.parse(result.answer);
+                    resultContent.innerHTML = htmlContent;
                     resultSection.style.display = 'block';
                 } else {
                     throw new Error('查询失败');
