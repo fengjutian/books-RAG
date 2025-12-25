@@ -65,7 +65,7 @@ class DeepSeekLLM(CustomLLM):
         )
 
     @llm_completion_callback()
-    def complete(self, prompt: str, **kwargs: Any) -> str:
+    def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """非流式生成（QueryEngine 实际调用的方法）"""
         try:
             print(f"🔍 DeepSeek API调用 - 提示词长度: {len(prompt)}")
@@ -83,15 +83,16 @@ class DeepSeekLLM(CustomLLM):
             text = resp.choices[0].message.content
             print(f"✅ DeepSeek API响应成功 - 响应长度: {len(text)}")
             print(f"✅ 响应前200字符: {text[:200]}...")
-            return text
+            return CompletionResponse(text=text)
         except Exception as e:
             print(f"❌ DeepSeek API调用失败: {str(e)}")
-            return f"DeepSeek API调用失败: {str(e)}"
+            return CompletionResponse(text=f"DeepSeek API调用失败: {str(e)}")
 
     @llm_completion_callback()
     def stream_complete(self, prompt: str, **kwargs: Any):
         """简化处理：先不真正做流式"""
-        yield self.complete(prompt, **kwargs)
+        response = self.complete(prompt, **kwargs)
+        yield response
 
 
 # =========================
@@ -189,42 +190,81 @@ def query_vector_store(query_text: str, top_k: int = 5) -> str:
         print(f"🔍 执行查询...")
         response = query_engine.query(query_text)
         
-        # 直接获取响应内容 - 使用response.response属性
+        # 详细检查响应对象
+        print(f"🔍 查询响应类型: {type(response)}")
+        print(f"🔍 响应对象属性: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+        
+        # 尝试多种方式获取响应内容
+        response_str = ""
+        
+        # 方法1: 检查response属性
         if hasattr(response, 'response') and response.response:
             actual_response = response.response
             print(f"✅ 获取到response.response内容")
             print(f"🔍 response.response类型: {type(actual_response)}")
             print(f"🔍 response.response内容长度: {len(str(actual_response))}")
             print(f"🔍 response.response内容: {str(actual_response)[:500]}...")
-            
             response_str = str(actual_response)
+        
+        # 方法2: 检查其他可能的属性
+        elif hasattr(response, 'response_txt') and response.response_txt:
+            response_str = response.response_txt
+            print(f"✅ 使用response_txt属性: {response_str[:200]}...")
+        
+        # 方法3: 检查是否有get_response()方法
+        elif hasattr(response, 'get_response') and callable(getattr(response, 'get_response')):
+            response_str = response.get_response()
+            print(f"✅ 使用get_response()方法: {response_str[:200]}...")
+        
+        # 方法4: 直接转换为字符串
         else:
-            # 如果response.response不存在，尝试其他属性
-            print(f"🔍 查询响应类型: {type(response)}")
-            print(f"🔍 响应对象属性: {[attr for attr in dir(response) if not attr.startswith('_')]}")
-            
-            # 尝试直接转换为字符串
             response_str = str(response)
-            print(f"🔍 str(response)长度: {len(response_str)}")
-            print(f"🔍 str(response)内容: {response_str[:500]}...")
+            print(f"🔍 直接str(response)长度: {len(response_str)}")
+            print(f"🔍 直接str(response)内容: {response_str[:500]}...")
         
         # 检查响应是否为空
         if not response_str or response_str.strip() == "" or response_str.strip() == "Empty Response":
-            print("⚠️ 响应为空，尝试使用检索器检查文档匹配情况")
+            print("⚠️ 响应为空，尝试手动构建查询流程")
             
-            # 使用检索器检查是否找到相关文档
+            # 手动构建查询流程：检索 + 手动调用LLM
             retriever = index.as_retriever(similarity_top_k=top_k)
             retrieved_nodes = retriever.retrieve(query_text)
             print(f"🔍 检索器找到文档数量: {len(retrieved_nodes)}")
             
             if retrieved_nodes:
-                print("✅ 检索器找到了相关文档，但LLM返回空响应")
-                # 构建简单的文档摘要
-                summary_parts = ["根据检索到的文档，相关内容如下："]
-                for i, node in enumerate(retrieved_nodes[:3], 1):
-                    preview = node.text[:300] + "..." if len(node.text) > 300 else node.text
-                    summary_parts.append(f"\n{i}. {preview}")
-                return "\n".join(summary_parts)
+                print("✅ 检索器找到了相关文档，手动构建提示词")
+                
+                # 构建上下文
+                context_parts = ["根据以下文档内容回答问题："]
+                for i, node in enumerate(retrieved_nodes, 1):
+                    context_parts.append(f"\n--- 文档 {i} ---")
+                    context_parts.append(node.text[:1000])  # 限制每个文档长度
+                
+                context_text = "\n".join(context_parts)
+                full_prompt = f"{context_text}\n\n问题：{query_text}"
+                
+                # 直接调用LLM，但需要包装成CompletionResponse
+                from app.services.vector_service import Settings
+                from llama_index.core.llms import CompletionResponse
+                
+                raw_response = Settings.llm.complete(full_prompt)
+                
+                # 检查是否是CompletionResponse对象
+                if isinstance(raw_response, CompletionResponse):
+                    llm_response = raw_response.text
+                else:
+                    llm_response = str(raw_response)
+                
+                if llm_response and not llm_response.startswith("DeepSeek API调用失败"):
+                    print(f"✅ 手动LLM调用成功: {llm_response[:200]}...")
+                    return llm_response
+                else:
+                    # 如果LLM调用失败，返回文档摘要
+                    summary_parts = ["根据检索到的文档，相关内容如下："]
+                    for i, node in enumerate(retrieved_nodes[:3], 1):
+                        preview = node.text[:300] + "..." if len(node.text) > 300 else node.text
+                        summary_parts.append(f"\n{i}. {preview}")
+                    return "\n".join(summary_parts)
             else:
                 print("❌ 检索器也未找到相关文档")
                 return "抱歉，没有找到相关的文档内容。请尝试用不同的关键词提问。"
