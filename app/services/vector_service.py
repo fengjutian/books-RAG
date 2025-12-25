@@ -41,17 +41,20 @@ from typing import Optional, List, Mapping, Any
 class DeepSeekLLM(CustomLLM):
     """DeepSeek语言模型包装器"""
     
-    def __init__(self, client, model="deepseek-chat"):
-        self.client = client
-        self.model = model
+    def __init__(self, api_key: str, base_url: str, model: str = "deepseek-chat"):
+        self._api_key = api_key
+        self._base_url = base_url
+        self._model = model
+        # 初始化客户端
+        self._client = OpenAI(api_key=api_key, base_url=base_url)
         super().__init__()
     
     @llm_completion_callback()
     def complete(self, prompt: str, **kwargs: Any) -> str:
         """完成文本生成"""
         try:
-            completion = self.client.chat.completions.create(
-                model=self.model,
+            completion = self._client.chat.completions.create(
+                model=self._model,
                 messages=[
                     {"role": "system", "content": "你是一个有用的AI助手，擅长中文和英文对话。"},
                     {"role": "user", "content": prompt}
@@ -71,13 +74,13 @@ class DeepSeekLLM(CustomLLM):
     def metadata(self) -> Mapping[str, Any]:
         """模型元数据"""
         return {
-            "model": self.model,
+            "model": self._model,
             "context_window": 32768,
             "num_output": 4096,
         }
 
 # 设置全局语言模型
-Settings.llm = DeepSeekLLM(deepseek_client, DEEPSEEK_MODEL)
+Settings.llm = DeepSeekLLM(DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL)
 
 # 设置全局嵌入模型 - 使用本地嵌入模型避免API调用
 from llama_index.core.embeddings import MockEmbedding

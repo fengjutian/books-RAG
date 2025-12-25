@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 # 加载环境变量
 load_dotenv()
 
-# 检查Kimi API密钥配置
-MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY")
-if not MOONSHOT_API_KEY or MOONSHOT_API_KEY == "your_moonshot_api_key_here":
-    raise ValueError("请配置有效的Kimi API密钥。请编辑.env文件并设置MOONSHOT_API_KEY")
+# 检查DeepSeek API密钥配置
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+if not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your_deepseek_api_key_here":
+    raise ValueError("请配置有效的DeepSeek API密钥。请编辑.env文件并设置DEEPSEEK_API_KEY")
 
 from app.routes import upload, query
 
