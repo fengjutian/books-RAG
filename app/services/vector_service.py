@@ -150,14 +150,24 @@ def query_vector_store(query_text: str, top_k: int = 5) -> str:
     """
     _load_or_create_index()
 
-    if not index.docstore.docs:
-        return "错误：向量索引为空，请先上传文档"
+    # 检查索引中是否有文档
+    doc_count = len(index.docstore.docs)
+    print(f"📊 向量索引中现有文档数量: {doc_count}")
+    
+    if doc_count == 0:
+        return "错误：向量索引为空，请先上传PDF文档"
 
     try:
         query_engine = index.as_query_engine(
             similarity_top_k=top_k
         )
         response = query_engine.query(query_text)
+        
+        # 检查响应是否为空
+        if not response or str(response).strip() == "":
+            return "抱歉，没有找到相关的答案。请尝试用不同的关键词提问。"
+            
         return str(response)
     except Exception as e:
+        print(f"❌ 查询错误: {str(e)}")
         return f"查询失败：{str(e)}"
