@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -43,13 +43,27 @@
             font-size: 1.1em;
         }
         
+        .main-content {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .left-panel {
+            flex: 1;
+        }
+        
+        .right-panel {
+            flex: 1;
+        }
+        
         .upload-section {
             border: 2px dashed #ddd;
             border-radius: 10px;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
-            margin-bottom: 30px;
             transition: all 0.3s ease;
+            height: fit-content;
         }
         
         .upload-section.dragover {
@@ -88,7 +102,7 @@
         }
         
         .query-section {
-            margin-top: 30px;
+            margin-top: 0;
         }
         
         .query-input {
@@ -151,6 +165,31 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                max-width: 100%;
+            }
+            
+            .main-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .left-panel, .right-panel {
+                flex: none;
+            }
+            
+            .upload-section {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+        
         .status {
             margin-top: 10px;
             padding: 10px;
@@ -179,30 +218,36 @@
             <p>上传PDF文档，向AI提问获取智能答案</p>
         </div>
         
-        <div class="upload-section" id="uploadArea">
-            <div class="upload-icon">📄</div>
-            <h3>上传PDF文档</h3>
-            <p>拖拽文件到此处或点击下方按钮选择文件</p>
-            <input type="file" id="fileInput" class="file-input" accept=".pdf">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择PDF文件</button>
-            <div class="file-info" id="fileInfo"></div>
-        </div>
-        
-        <div class="status" id="uploadStatus"></div>
-        
-        <div class="query-section">
-            <h3>💬 智能问答</h3>
-            <textarea class="query-input" id="queryInput" placeholder="请输入您的问题..." rows="4"></textarea>
-            <button class="query-btn" onclick="askQuestion()">提问</button>
-            
-            <div class="loading" id="queryLoading">
-                <div class="spinner"></div>
-                <p>AI正在思考中...</p>
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="upload-section" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <h3>上传PDF文档</h3>
+                    <p>拖拽文件到此处或点击下方按钮选择文件</p>
+                    <input type="file" id="fileInput" class="file-input" accept=".pdf">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择PDF文件</button>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+                
+                <div class="status" id="uploadStatus"></div>
             </div>
             
-            <div class="result-section" id="resultSection">
-                <h3>🤖 AI回答</h3>
-                <div class="result-content" id="resultContent"></div>
+            <div class="right-panel">
+                <div class="query-section">
+                    <h3>💬 智能问答</h3>
+                    <textarea class="query-input" id="queryInput" placeholder="请输入您的问题..." rows="4"></textarea>
+                    <button class="query-btn" onclick="askQuestion()">提问</button>
+                    
+                    <div class="loading" id="queryLoading">
+                        <div class="spinner"></div>
+                        <p>AI正在思考中...</p>
+                    </div>
+                    
+                    <div class="result-section" id="resultSection">
+                        <h3>🤖 AI回答</h3>
+                        <div class="result-content" id="resultContent"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
