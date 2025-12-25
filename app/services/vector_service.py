@@ -5,6 +5,13 @@
 - FAISS 向量存储
 - LlamaIndex RAG
 - DeepSeek Chat API
+
+问题诊断：
+1. 文档插入成功（680个向量）
+2. 查询返回空，可能原因：
+   - DeepSeek API调用失败
+   - 查询处理逻辑问题
+   - 向量索引构建问题
 """
 
 import os
@@ -60,17 +67,26 @@ class DeepSeekLLM(CustomLLM):
     @llm_completion_callback()
     def complete(self, prompt: str, **kwargs: Any) -> str:
         """非流式生成（QueryEngine 实际调用的方法）"""
-        resp = self._client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": "你是一个专业、可靠的 AI 助手。"},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.3,
-        )
+        try:
+            print(f"🔍 DeepSeek API调用 - 提示词长度: {len(prompt)}")
+            print(f"🔍 提示词前200字符: {prompt[:200]}...")
+            
+            resp = self._client.chat.completions.create(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": "你是一个专业、可靠的 AI 助手。"},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+            )
 
-        text = resp.choices[0].message.content
-        return text
+            text = resp.choices[0].message.content
+            print(f"✅ DeepSeek API响应成功 - 响应长度: {len(text)}")
+            print(f"✅ 响应前200字符: {text[:200]}...")
+            return text
+        except Exception as e:
+            print(f"❌ DeepSeek API调用失败: {str(e)}")
+            return f"DeepSeek API调用失败: {str(e)}"
 
     @llm_completion_callback()
     def stream_complete(self, prompt: str, **kwargs: Any):
@@ -147,7 +163,14 @@ def add_documents_to_index(docs: List):
 def query_vector_store(query_text: str, top_k: int = 5) -> str:
     """
     向量查询接口
+    
+    问题诊断步骤：
+    1. 检查向量索引状态
+    2. 检查DeepSeek API调用
+    3. 检查查询处理流程
     """
+    print(f"🔍 开始查询处理 - 查询内容: {query_text}")
+    
     _load_or_create_index()
 
     # 检查索引中是否有文档
@@ -158,16 +181,57 @@ def query_vector_store(query_text: str, top_k: int = 5) -> str:
         return "错误：向量索引为空，请先上传PDF文档"
 
     try:
+        print(f"🔍 创建查询引擎 - top_k: {top_k}")
         query_engine = index.as_query_engine(
             similarity_top_k=top_k
         )
+        
+        print(f"🔍 执行查询...")
         response = query_engine.query(query_text)
         
-        # 检查响应是否为空
-        if not response or str(response).strip() == "":
-            return "抱歉，没有找到相关的答案。请尝试用不同的关键词提问。"
+        # 直接获取响应内容 - 使用response.response属性
+        if hasattr(response, 'response') and response.response:
+            actual_response = response.response
+            print(f"✅ 获取到response.response内容")
+            print(f"🔍 response.response类型: {type(actual_response)}")
+            print(f"🔍 response.response内容长度: {len(str(actual_response))}")
+            print(f"🔍 response.response内容: {str(actual_response)[:500]}...")
             
-        return str(response)
+            response_str = str(actual_response)
+        else:
+            # 如果response.response不存在，尝试其他属性
+            print(f"🔍 查询响应类型: {type(response)}")
+            print(f"🔍 响应对象属性: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+            
+            # 尝试直接转换为字符串
+            response_str = str(response)
+            print(f"🔍 str(response)长度: {len(response_str)}")
+            print(f"🔍 str(response)内容: {response_str[:500]}...")
+        
+        # 检查响应是否为空
+        if not response_str or response_str.strip() == "" or response_str.strip() == "Empty Response":
+            print("⚠️ 响应为空，尝试使用检索器检查文档匹配情况")
+            
+            # 使用检索器检查是否找到相关文档
+            retriever = index.as_retriever(similarity_top_k=top_k)
+            retrieved_nodes = retriever.retrieve(query_text)
+            print(f"🔍 检索器找到文档数量: {len(retrieved_nodes)}")
+            
+            if retrieved_nodes:
+                print("✅ 检索器找到了相关文档，但LLM返回空响应")
+                # 构建简单的文档摘要
+                summary_parts = ["根据检索到的文档，相关内容如下："]
+                for i, node in enumerate(retrieved_nodes[:3], 1):
+                    preview = node.text[:300] + "..." if len(node.text) > 300 else node.text
+                    summary_parts.append(f"\n{i}. {preview}")
+                return "\n".join(summary_parts)
+            else:
+                print("❌ 检索器也未找到相关文档")
+                return "抱歉，没有找到相关的文档内容。请尝试用不同的关键词提问。"
+        
+        return response_str
     except Exception as e:
         print(f"❌ 查询错误: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return f"查询失败：{str(e)}"
