@@ -1,7 +1,8 @@
 fastapi
 uvicorn
-llama-index
+llama-index-core
 faiss-cpu
 openai
 python-multipart
 pypdf2
+python-dotenv
