@@ -68,42 +68,71 @@ function App() {
       </Header>
       
       <Content style={{ padding: '40px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-        <Space vertical style={{ width: '100%', marginBottom: '24px' }}>
-          <Card
-            title={
-              <Space align="center">
-                <IconUpload size="large" style={{ color: '#1890ff' }} />
-                <Text strong>上传书籍</Text>
-              </Space>
-            }
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: '8px' }}
-          >
-            <FileUpload onFileUpload={handleFileUpload} />
-          </Card>
+        <div style={{ 
+          display: 'flex', 
+          gap: '24px', 
+          width: '100%',
+          flexWrap: 'wrap'
+        }}>
+          {/* 左侧上传部分 */}
+          <div style={{ 
+            flex: '0 0 350px',
+            maxWidth: '100%'
+          }}>
+            <Card
+              title={
+                <Space align="center">
+                  <IconUpload size="large" style={{ color: '#1890ff' }} />
+                  <Text strong>上传书籍</Text>
+                </Space>
+              }
+              style={{ 
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: '#fff'
+              }}
+            >
+              <div style={{ color: '#fff' }}>
+                <FileUpload onFileUpload={handleFileUpload} />
+              </div>
+            </Card>
+          </div>
           
-          <Card
-            title={
-              <Space align="center">
-                <IconSearch size="large" style={{ color: '#1890ff' }} />
-                <Text strong>问题查询</Text>
-              </Space>
-            }
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: '8px' }}
-          >
-            <QueryForm onQuerySubmit={handleQuery} isLoading={loading} />
-          </Card>
-          
-          <Card
-            title={<Text strong>查询结果</Text>}
-            style={{ 
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-              borderRadius: '8px', 
-              minHeight: 300 
-            }}
-          >
-            <ResultDisplay result={result} loading={loading} error={error} />
-          </Card>
-        </Space>
+          {/* 右侧问答和结果部分 */}
+          <div style={{ 
+            flex: '1', 
+            minWidth: '300px'
+          }}>
+            <Space vertical style={{ width: '100%', gap: '24px' }}>
+              <Card
+                title={
+                  <Space align="center">
+                    <IconSearch size="large" style={{ color: '#1890ff' }} />
+                    <Text strong>问题查询</Text>
+                  </Space>
+                }
+                style={{ 
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                  borderRadius: '12px'
+                }}
+              >
+                <QueryForm onQuerySubmit={handleQuery} isLoading={loading} />
+              </Card>
+              
+              <Card
+                title={<Text strong>查询结果</Text>}
+                style={{ 
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                  borderRadius: '12px', 
+                  minHeight: 400
+                }}
+              >
+                <ResultDisplay result={result} loading={loading} error={error} />
+              </Card>
+            </Space>
+          </div>
+        </div>
       </Content>
     </Layout>
   )
