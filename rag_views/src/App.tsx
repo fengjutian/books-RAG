@@ -1,9 +1,14 @@
 import { useState } from 'react'
 import './App.css'
+import { Layout, Card, Typography, Space } from '@douyinfe/semi-ui'
+import { IconBook, IconSearch, IconUpload } from '@douyinfe/semi-icons'
 import FileUpload from './components/FileUpload'
 import QueryForm from './components/QueryForm'
 import ResultDisplay from './components/ResultDisplay'
 import { uploadFile, query } from './services/api'
+
+const { Header, Content } = Layout
+const { Title, Text } = Typography
 
 function App() {
   const [result, setResult] = useState<string>('')
@@ -48,26 +53,59 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      <header>
-        <h1>书籍RAG问答系统</h1>
-      </header>
-      <main>
-        <section className="upload-section">
-          <h2>上传书籍</h2>
-          <FileUpload onFileUpload={handleFileUpload} />
-        </section>
-        
-        <section className="query-section">
-          <h2>问题查询</h2>
-          <QueryForm onQuerySubmit={handleQuery} isLoading={loading} />
-        </section>
-        
-        <section className="result-section">
-          <ResultDisplay result={result} loading={loading} error={error} />
-        </section>
-      </main>
-    </div>
+    <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+      <Header style={{ 
+        background: '#fff', 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+        padding: '0 40px', 
+        display: 'flex', 
+        alignItems: 'center' 
+      }}>
+        <IconBook size="extra-large" style={{ marginRight: 16, color: '#1890ff' }} />
+        <Title heading={2} style={{ margin: 0, color: '#333' }}>
+          书籍RAG问答系统
+        </Title>
+      </Header>
+      
+      <Content style={{ padding: '40px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+        <Space vertical style={{ width: '100%', marginBottom: '24px' }}>
+          <Card
+            title={
+              <Space align="center">
+                <IconUpload size="large" style={{ color: '#1890ff' }} />
+                <Text strong>上传书籍</Text>
+              </Space>
+            }
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: '8px' }}
+          >
+            <FileUpload onFileUpload={handleFileUpload} />
+          </Card>
+          
+          <Card
+            title={
+              <Space align="center">
+                <IconSearch size="large" style={{ color: '#1890ff' }} />
+                <Text strong>问题查询</Text>
+              </Space>
+            }
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: '8px' }}
+          >
+            <QueryForm onQuerySubmit={handleQuery} isLoading={loading} />
+          </Card>
+          
+          <Card
+            title={<Text strong>查询结果</Text>}
+            style={{ 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+              borderRadius: '8px', 
+              minHeight: 300 
+            }}
+          >
+            <ResultDisplay result={result} loading={loading} error={error} />
+          </Card>
+        </Space>
+      </Content>
+    </Layout>
   )
 }
 
