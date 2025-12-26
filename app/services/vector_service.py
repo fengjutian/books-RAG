@@ -17,8 +17,12 @@
 import os
 import logging
 from typing import Any, Mapping, List
+from dotenv import load_dotenv
 
 from app.logger.logging_config import get_logging_config
+
+# 加载环境变量
+load_dotenv()
 from openai import OpenAI
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core.settings import Settings

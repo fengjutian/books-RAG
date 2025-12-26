@@ -5,9 +5,10 @@ import os
 from dotenv import load_dotenv
 from app.routes import upload, query
 import logging
-from logging_config import get_logging_config
+from app.logger.logging_config import get_logging_config
 
 logging.config.dictConfig(get_logging_config())
+logger = logging.getLogger("myapp")
 
 # 加载环境变量
 load_dotenv()
