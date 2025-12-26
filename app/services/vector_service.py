@@ -15,14 +15,20 @@
 """
 
 import os
+import logging
 from typing import Any, Mapping, List
 
+from app.logger.logging_config import get_logging_config
 from openai import OpenAI
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core.settings import Settings
 from llama_index.core.llms import CustomLLM, CompletionResponse, LLMMetadata
 from llama_index.core.llms.callbacks import llm_completion_callback
 from llama_index.core.embeddings import MockEmbedding
+
+# 配置日志
+logging.config.dictConfig(get_logging_config())
+logger = logging.getLogger("myapp")
 
 
 # =========================
@@ -68,8 +74,8 @@ class DeepSeekLLM(CustomLLM):
     def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """非流式生成（QueryEngine 实际调用的方法）"""
         try:
-            print(f"🔍 DeepSeek API调用 - 提示词长度: {len(prompt)}")
-            print(f"🔍 提示词前200字符: {prompt[:200]}...")
+            logger.info("DeepSeek API调用 - 提示词长度: %d", len(prompt))
+            logger.debug("DeepSeek API调用 - 提示词前200字符: %s", prompt[:200] + "...")
             
             resp = self._client.chat.completions.create(
                 model=self._model,
@@ -81,11 +87,11 @@ class DeepSeekLLM(CustomLLM):
             )
 
             text = resp.choices[0].message.content
-            print(f"✅ DeepSeek API响应成功 - 响应长度: {len(text)}")
-            print(f"✅ 响应前200字符: {text[:200]}...")
+            logger.info("DeepSeek API响应成功 - 响应长度: %d", len(text))
+            logger.debug("DeepSeek API响应成功 - 响应前200字符: %s", text[:200] + "...")
             return CompletionResponse(text=text)
         except Exception as e:
-            print(f"❌ DeepSeek API调用失败: {str(e)}")
+            logger.error("DeepSeek API调用失败: %s", str(e))
             return CompletionResponse(text=f"DeepSeek API调用失败: {str(e)}")
 
     @llm_completion_callback()
@@ -108,7 +114,7 @@ Settings.llm = DeepSeekLLM(
 # ⚠️ MockEmbedding 只适合 demo / 调试
 Settings.embed_model = MockEmbedding(embed_dim=384)
 
-print("✅ DeepSeek LLM 初始化完成（MockEmbedding）")
+logger.info("DeepSeek LLM 初始化完成（使用 MockEmbedding）")
 
 
 # =========================
@@ -137,11 +143,11 @@ def _load_or_create_index():
             [],
             storage_context=storage_context,
         )
-        print("📦 已加载本地向量索引")
+        logger.info("已加载本地向量索引")
     except Exception:
         storage_context = StorageContext.from_defaults()
         index = VectorStoreIndex([], storage_context=storage_context)
-        print("🆕 创建新的向量索引")
+        logger.info("创建新的向量索引")
 
 
 def add_documents_to_index(docs: List):
@@ -158,7 +164,7 @@ def add_documents_to_index(docs: List):
         index.insert(doc)
 
     index.storage_context.persist(persist_dir=VECTOR_STORE_PATH)
-    print(f"✅ 已插入 {len(docs)} 个文档")
+    logger.info("已插入 %d 个文档到向量索引", len(docs))
 
 
 def query_vector_store(query_text: str, top_k: int = 5) -> str:
