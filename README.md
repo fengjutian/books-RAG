@@ -65,7 +65,7 @@ pip install -r requirements.txt
 ### 运行项目
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --log-config logging.conf  --host 0.0.0.0 --port 8000 --reload
 ```
 
 服务器将在 `http://localhost:8000` 启动，API 文档可在 `http://localhost:8000/docs` 查看。
