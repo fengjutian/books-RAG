@@ -30,6 +30,9 @@ from llama_index.core.llms import CustomLLM, CompletionResponse, LLMMetadata
 from llama_index.core.llms.callbacks import llm_completion_callback
 from llama_index.core.embeddings import MockEmbedding
 
+# 导入HuggingFace嵌入模型
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
 # 配置日志
 logging.config.dictConfig(get_logging_config())
 logger = logging.getLogger("myapp")
@@ -116,9 +119,15 @@ Settings.llm = DeepSeekLLM(
 )
 
 # ⚠️ MockEmbedding 只适合 demo / 调试
-Settings.embed_model = MockEmbedding(embed_dim=384)
+# Settings.embed_model = MockEmbedding(embed_dim=384)
 
-logger.info("DeepSeek LLM 初始化完成（使用 MockEmbedding）")
+# logger.info("DeepSeek LLM 初始化完成（使用 MockEmbedding）")
+
+# 使用真实的HuggingFace嵌入模型
+Settings.embed_model = HuggingFaceEmbedding(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",  # 指定模型名称
+    embed_batch_size=100  # 可根据需要调整批量大小
+)
 
 
 # =========================
