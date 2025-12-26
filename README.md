@@ -11,7 +11,6 @@ books-RAG 是一个基于 FastAPI 的 PDF 文档检索增强生成 (Retrieval-Au
 - **RAG 框架**: LlamaIndex 0.14.10
 - **向量存储**: FAISS (Facebook AI Similarity Search)
 - **文本分块**: LlamaIndex SentenceSplitter
-- **嵌入模型**: HuggingFace sentence-transformers/all-MiniLM-L6-v2 (本地运行)
 - **PDF 处理**: PyPDF2
 - **配置管理**: Python 环境变量
 
