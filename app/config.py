@@ -1,9 +1,5 @@
 import os
 
-# LLM 配置
-LLM_MODEL = "kimi-k2-turbo-preview"
-TEMPERATURE = 0
-
 # 向量数据库路径
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VECTOR_STORE_PATH = os.path.join(BASE_DIR, "data", "vector_db")

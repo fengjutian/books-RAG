@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import os
 from dotenv import load_dotenv
+from app.routes import upload, query
 
 # 加载环境变量
 load_dotenv()
@@ -11,8 +12,6 @@ load_dotenv()
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 if not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your_deepseek_api_key_here":
     raise ValueError("请配置有效的DeepSeek API密钥。请编辑.env文件并设置DEEPSEEK_API_KEY")
-
-from app.routes import upload, query
 
 app = FastAPI(title="PDF RAG FastAPI")
 

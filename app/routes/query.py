@@ -4,8 +4,10 @@ from app.services.rag_service import answer_question
 
 router = APIRouter()
 
+
 class QueryRequest(BaseModel):
     text: str
+
 
 @router.post("/query/")
 async def query(req: QueryRequest):
