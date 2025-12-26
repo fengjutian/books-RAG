@@ -10,4 +10,13 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000', // 后端服务器地址
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })

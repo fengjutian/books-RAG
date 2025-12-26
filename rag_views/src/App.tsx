@@ -1,34 +1,73 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import FileUpload from './components/FileUpload'
+import QueryForm from './components/QueryForm'
+import ResultDisplay from './components/ResultDisplay'
+import { uploadFile, query } from './services/api'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [result, setResult] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleFileUpload = async (file: File) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await uploadFile(file)
+      if (response.success) {
+        alert(response.message)
+      } else {
+        setError(response.message)
+      }
+    } catch (err) {
+      setError('文件上传失败，请重试')
+      console.error('Upload error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleQuery = async (question: string) => {
+    setLoading(true)
+    setError(null)
+    setResult('')
+    try {
+      const response = await query(question)
+      if (response.success) {
+        setResult(response.answer)
+      } else {
+        setError('查询失败，请重试')
+      }
+    } catch (err) {
+      setError('查询失败，请检查网络连接')
+      console.error('Query error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app-container">
+      <header>
+        <h1>书籍RAG问答系统</h1>
+      </header>
+      <main>
+        <section className="upload-section">
+          <h2>上传书籍</h2>
+          <FileUpload onFileUpload={handleFileUpload} />
+        </section>
+        
+        <section className="query-section">
+          <h2>问题查询</h2>
+          <QueryForm onQuerySubmit={handleQuery} isLoading={loading} />
+        </section>
+        
+        <section className="result-section">
+          <ResultDisplay result={result} loading={loading} error={error} />
+        </section>
+      </main>
+    </div>
   )
 }
 
