@@ -1,6 +1,12 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.pdf_service import process_pdf
 from app.services.vector_service import add_documents_to_index
+import logging
+from app.logger.logging_config import get_logging_config
+
+# 配置日志
+logging.config.dictConfig(get_logging_config())
+logger = logging.getLogger("myapp")
 
 router = APIRouter()
 
@@ -19,5 +25,5 @@ async def upload_pdf(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Upload error: {e}")
+        logger.error(f"Upload error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"文件处理失败: {str(e)}")

@@ -176,29 +176,29 @@ def query_vector_store(query_text: str, top_k: int = 5) -> str:
     2. 检查DeepSeek API调用
     3. 检查查询处理流程
     """
-    print(f"🔍 开始查询处理 - 查询内容: {query_text}")
+    logger.info("开始查询处理 - 查询内容: %s", query_text)
     
     _load_or_create_index()
 
     # 检查索引中是否有文档
     doc_count = len(index.docstore.docs)
-    print(f"📊 向量索引中现有文档数量: {doc_count}")
+    logger.info("向量索引中现有文档数量: %d", doc_count)
     
     if doc_count == 0:
         return "错误：向量索引为空，请先上传PDF文档"
 
     try:
-        print(f"🔍 创建查询引擎 - top_k: {top_k}")
+        logger.info("创建查询引擎 - top_k: %d", top_k)
         query_engine = index.as_query_engine(
             similarity_top_k=top_k
         )
         
-        print(f"🔍 执行查询...")
+        logger.info("执行查询...")
         response = query_engine.query(query_text)
         
         # 详细检查响应对象
-        print(f"🔍 查询响应类型: {type(response)}")
-        print(f"🔍 响应对象属性: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+        logger.debug("查询响应类型: %s", type(response))
+        logger.debug("响应对象属性: %s", [attr for attr in dir(response) if not attr.startswith('_')])
         
         # 尝试多种方式获取响应内容
         response_str = ""
@@ -206,39 +206,40 @@ def query_vector_store(query_text: str, top_k: int = 5) -> str:
         # 方法1: 检查response属性
         if hasattr(response, 'response') and response.response:
             actual_response = response.response
-            print(f"✅ 获取到response.response内容")
-            print(f"🔍 response.response类型: {type(actual_response)}")
-            print(f"🔍 response.response内容长度: {len(str(actual_response))}")
-            print(f"🔍 response.response内容: {str(actual_response)[:500]}...")
+            logger.info("获取到response.response内容")
+            logger.debug("response.response类型: %s", type(actual_response))
+            logger.debug("response.response内容长度: %d", len(str(actual_response)))
+            logger.debug("response.response内容: %s", str(actual_response)[:500] + "...")
             response_str = str(actual_response)
         
         # 方法2: 检查其他可能的属性
         elif hasattr(response, 'response_txt') and response.response_txt:
             response_str = response.response_txt
-            print(f"✅ 使用response_txt属性: {response_str[:200]}...")
+            logger.info("使用response_txt属性获取响应内容")
         
         # 方法3: 检查是否有get_response()方法
         elif hasattr(response, 'get_response') and callable(getattr(response, 'get_response')):
             response_str = response.get_response()
-            print(f"✅ 使用get_response()方法: {response_str[:200]}...")
+            logger.info("使用get_response()方法获取响应内容")
         
         # 方法4: 直接转换为字符串
         else:
             response_str = str(response)
-            print(f"🔍 直接str(response)长度: {len(response_str)}")
-            print(f"🔍 直接str(response)内容: {response_str[:500]}...")
+            logger.info("直接转换response对象为字符串")
+            logger.debug("转换后的响应长度: %d", len(response_str))
+            logger.debug("转换后的响应内容: %s", response_str[:500] + "...")
         
         # 检查响应是否为空
         if not response_str or response_str.strip() == "" or response_str.strip() == "Empty Response":
-            print("⚠️ 响应为空，尝试手动构建查询流程")
+            logger.warning("响应为空，尝试手动构建查询流程")
             
             # 手动构建查询流程：检索 + 手动调用LLM
             retriever = index.as_retriever(similarity_top_k=top_k)
             retrieved_nodes = retriever.retrieve(query_text)
-            print(f"🔍 检索器找到文档数量: {len(retrieved_nodes)}")
+            logger.info("检索器找到文档数量: %d", len(retrieved_nodes))
             
             if retrieved_nodes:
-                print("✅ 检索器找到了相关文档，手动构建提示词")
+                logger.info("检索器找到了相关文档，手动构建提示词")
                 
                 # 构建上下文
                 context_parts = ["根据以下文档内容回答问题："]
@@ -262,22 +263,21 @@ def query_vector_store(query_text: str, top_k: int = 5) -> str:
                     llm_response = str(raw_response)
                 
                 if llm_response and not llm_response.startswith("DeepSeek API调用失败"):
-                    print(f"✅ 手动LLM调用成功: {llm_response[:200]}...")
+                    logger.info("手动LLM调用成功")
                     return llm_response
                 else:
                     # 如果LLM调用失败，返回文档摘要
+                    logger.warning("手动LLM调用失败，返回文档摘要")
                     summary_parts = ["根据检索到的文档，相关内容如下："]
                     for i, node in enumerate(retrieved_nodes[:3], 1):
                         preview = node.text[:300] + "..." if len(node.text) > 300 else node.text
                         summary_parts.append(f"\n{i}. {preview}")
                     return "\n".join(summary_parts)
             else:
-                print("❌ 检索器也未找到相关文档")
+                logger.warning("检索器也未找到相关文档")
                 return "抱歉，没有找到相关的文档内容。请尝试用不同的关键词提问。"
         
         return response_str
     except Exception as e:
-        print(f"❌ 查询错误: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error("查询错误: %s", str(e), exc_info=True)
         return f"查询失败：{str(e)}"
