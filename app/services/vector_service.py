@@ -30,6 +30,9 @@ from llama_index.core.llms import CustomLLM, CompletionResponse, LLMMetadata
 from llama_index.core.llms.callbacks import llm_completion_callback
 from llama_index.core.embeddings import MockEmbedding
 
+# 导入PyTorch用于CUDA检测
+import torch
+
 # 导入HuggingFace嵌入模型
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
@@ -123,11 +126,15 @@ Settings.llm = DeepSeekLLM(
 
 # logger.info("DeepSeek LLM 初始化完成（使用 MockEmbedding）")
 
+# 检测CUDA是否可用
+device = "cuda" if torch.cuda.is_available() else "cpu"
+logger.info("使用设备进行嵌入计算: %s", device)
+
 # 使用真实的HuggingFace嵌入模型
 Settings.embed_model = HuggingFaceEmbedding(
     model_name="sentence-transformers/all-MiniLM-L6-v2",  # 指定模型名称
     embed_batch_size=100,  # 可根据需要调整批量大小
-    device="cuda"  # 使用GPU
+    device=device  # 动态设置设备
 )
 
 
