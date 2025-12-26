@@ -56,12 +56,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. **安装额外依赖**
+**当前项目配置说明**：
+- 文本分块：使用 `llama_index.core.node_parser.SentenceSplitter`（已包含在 llama-index-core 中）
+- 向量存储：使用默认的向量存储实现（依赖 faiss-cpu）
+- 嵌入模型：当前使用 `MockEmbedding`（仅用于演示/调试），如需实际嵌入功能请安装上述依赖
 
-```bash
-pip install langchain langchain-text-splitters
-pip install llama-index-vector-stores-faiss llama-index-embeddings-huggingface
-```
 
 ### 运行项目
 
