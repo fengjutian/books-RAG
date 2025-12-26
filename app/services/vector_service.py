@@ -126,7 +126,8 @@ Settings.llm = DeepSeekLLM(
 # 使用真实的HuggingFace嵌入模型
 Settings.embed_model = HuggingFaceEmbedding(
     model_name="sentence-transformers/all-MiniLM-L6-v2",  # 指定模型名称
-    embed_batch_size=100  # 可根据需要调整批量大小
+    embed_batch_size=100,  # 可根据需要调整批量大小
+    device="cuda"  # 使用GPU
 )
 
 
