@@ -43,12 +43,18 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
             log_record["timestamp"] = log_record.pop("asctime")
 
 
-def get_logging_config():
+def get_logging_config(debug: bool = False):
     """
     获取日志配置字典
     
+    参数:
+        debug: bool - 是否启用DEBUG模式
+        
     返回符合logging.config.dictConfig格式的配置字典
     """
+    # 根据DEBUG模式设置日志级别
+    log_level = "DEBUG" if debug else "INFO"
+    
     return {
         "version": 1,  # 日志配置版本号
         "disable_existing_loggers": False,  # 保持False，否则会禁用已存在的日志器
@@ -73,13 +79,13 @@ def get_logging_config():
             # Uvicorn主日志器
             "uvicorn": {
                 "handlers": ["console"],
-                "level": "INFO",
+                "level": log_level,
                 "propagate": False,  # 不向上传播日志
             },
             # Uvicorn错误日志器
             "uvicorn.error": {
                 "handlers": ["console"],
-                "level": "INFO",
+                "level": log_level,
                 "propagate": False,
             },
             # 屏蔽默认的访问日志，推荐使用中间件自定义
@@ -90,7 +96,13 @@ def get_logging_config():
             # 应用程序自定义日志器
             "app": {
                 "handlers": ["console"],
-                "level": "INFO",
+                "level": log_level,
+                "propagate": False,
+            },
+            # 支持myapp日志器（保持向后兼容）
+            "myapp": {
+                "handlers": ["console"],
+                "level": log_level,
                 "propagate": False,
             }
         },
@@ -98,6 +110,6 @@ def get_logging_config():
         # 根日志器配置
         "root": {
             "handlers": ["console"],
-            "level": "INFO"
+            "level": log_level
         }
     }

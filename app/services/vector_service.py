@@ -17,12 +17,10 @@
 import os
 import logging
 from typing import Any, Mapping, List
-from dotenv import load_dotenv
 
 from app.logger.logging_config import get_logging_config
+from app.config import config
 
-# 加载环境变量
-load_dotenv()
 from openai import OpenAI
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core.settings import Settings
@@ -39,23 +37,21 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from app.llm.DeepSeekLLM import DeepSeekLLM
 
 # 配置日志
-logging.config.dictConfig(get_logging_config())
-logger = logging.getLogger("myapp")
+logging.config.dictConfig(get_logging_config(config.DEBUG))
+logger = logging.getLogger("app")
 
 
 # =========================
 # 配置
 # =========================
 
-VECTOR_STORE_PATH = "data/vector_db"
+# 从配置对象获取配置
+VECTOR_STORE_PATH = config.VECTOR_STORE_PATH
 os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
 
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-DEEPSEEK_API_BASE = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
-
-if not DEEPSEEK_API_KEY:
-    raise ValueError("请配置 DEEPSEEK_API_KEY 环境变量")
+DEEPSEEK_API_KEY = config.DEEPSEEK_API_KEY
+DEEPSEEK_API_BASE = config.DEEPSEEK_API_BASE
+DEEPSEEK_MODEL = config.DEEPSEEK_MODEL
 
 
 # =========================

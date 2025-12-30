@@ -11,8 +11,12 @@ PDF处理服务模块
 是RAG系统中文本数据预处理的核心组件
 """
 import os
-# 导入配置参数：分块大小、重叠大小和基础目录
-from app.config import CHUNK_SIZE, CHUNK_OVERLAP, BASE_DIR
+# 导入配置类
+from app.config import config, BASE_DIR
+
+# 从配置类获取参数
+CHUNK_SIZE = config.CHUNK_SIZE
+CHUNK_OVERLAP = config.CHUNK_OVERLAP
 # 导入PDFDocument模型，用于PDF文档数据的封装
 from app.models.document import PDFDocument
 # 导入文本分块器，用于将长文本分割成合适大小的块
