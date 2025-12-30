@@ -3,6 +3,14 @@
 # DeepSeek LLM 实现
 # =========================
 
+import logging
+from typing import Any
+from openai import OpenAI
+from llama_index.core.llms import CustomLLM, CompletionResponse, LLMMetadata
+from llama_index.core.llms.callbacks import llm_completion_callback
+
+logger = logging.getLogger(__name__)
+
 class DeepSeekLLM(CustomLLM):
     """DeepSeek Chat LLM (LlamaIndex CustomLLM 适配)"""
 
